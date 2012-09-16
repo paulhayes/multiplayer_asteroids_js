@@ -24,6 +24,8 @@
 </head>
 <script src="js/request_animation_frame.js" ></script>
 <script src="/socket.io/socket.io.js"></script>
+<script src="js/transform.js"></script>
+<script src="js/geom.js"></script>
 <script src="js/virtualjoystick.js"></script>
 <body>
 	<div id="container">
@@ -49,7 +51,7 @@
 	var deg2rad = Math.PI / 180;
 	var shipColor = "#fff";
 	var laserColor = "#0f0";
-	var spaceShipData = { x : c.width / 2, y : c.height/ 2, vx : 0, vy : 0, rotation : 0, id : id, vr : 0, ar : 0, ax : 0, ay : 0, keys : {} };
+	var spaceShipData = null; 
 	var asteroids = [];
 	var lasers = [];
 	var keysPressed = {};
@@ -60,7 +62,20 @@
 	var lastUpdate = new Date().getTime() * 0.001;
 	var lastDraw = new Date().getTime() * 0.001;
 	var timeElapsedSinceLastLaser = 0;
+	var score = 0;
 	
+	var points = [
+		{ x : 0, y : -2 },
+		{ x : -2, y : 2 },
+		{ x : 2, y : 2 },
+		{ x : 0, y : 1 }
+	];
+	var lines = [
+		1,0,
+		0,2,
+		2,3,
+		3,1
+	];
 	
 	
 	window.addEventListener ("keydown", function(e){
@@ -69,6 +84,9 @@
 		if( spaceShipData ){ 
 			spaceShipData.keys = keysPressed;
 			updatePlayerPosition();
+		}
+		else if( e.keyCode == SPACEBAR ){
+			createSpaceShip();
 		}
 	});
 
@@ -82,7 +100,10 @@
 	});
 	
 	
-
+	function createSpaceShip(){
+			spaceShipData = { x : Math.random() * c.width, y : Math.random() * c.height, vx : 0, vy : 0, rotation : 0, id : id, vr : 0, ar : 0, ax : 0, ay : 0, keys : {} };
+			socket.emit('newPlayer', spaceShipData );	
+	}
 	
 	function drawLine( start, end ) {
   
@@ -110,19 +131,21 @@
 	function drawSpaceShip(spaceShipData){
 		var x = spaceShipData.x,
 			y = spaceShipData.y;
+		
+		
 		ctx.save();
 		ctx.translate(x,y);
+		
 		ctx.rotate( spaceShipData.rotation * deg2rad );
 		ctx.translate(0,-0.5);
 		ctx.scale(SHIP_SCALE,SHIP_SCALE);
-		var a = { x : 0, y : -2 };
-		var b = { x : -2, y : 2 };
-		var c = { x : 2, y : 2 };
-		var d = { x : 0, y : 1 };
-		drawLine(b,a);
-		drawLine(a,c);
-		drawLine(c,d);
-		drawLine(d,b);
+		
+		/* Draw ships lines, each line is made up of the indexes to two points in the points array */
+		for( var i=lines.length-1; i>=0; i-=2 )
+		{
+			drawLine( points[lines[i]], points[lines[i-1]] );
+		}
+		
 		ctx.restore();
 
 	}
@@ -266,11 +289,19 @@
 		spaceShipData.vr *= 0.95;
 		spaceShipData.vx *= 0.99;
 		spaceShipData.vy *= 0.99;
+		
+		var transform = spaceShipData.transform || ( spaceShipData.transform = new Transform() );
+		transform.reset();	
+		transform.translate(spaceShipData.x,spaceShipData.y);
+		transform.rotate( spaceShipData.rotation * deg2rad );
+		transform.translate(0,-0.5);
+		transform.scale(SHIP_SCALE,SHIP_SCALE);
+		
 
 	}
 	
 	function updateShooting(){
-		if ( spaceShipData.keys[SPACEBAR] ) {
+		if (  spaceShipData.keys[SPACEBAR] ) {
 			fireLaser();
 		}
 		
@@ -280,6 +311,66 @@
 	}
 
 
+	
+	function checkForCollision(){
+		
+		var playerBounds = geom.calculateBounds( geom.applyMatrixToPoints( points, spaceShipData.transform ) );
+	
+		for( var spaceShipId in otherPlayers ) {			
+			var enemySpaceShip = otherPlayers[spaceShipId];
+			
+			var enemyBounds = geom.calculateBounds( geom.applyMatrixToPoints( points, enemySpaceShip.transform ) );
+			
+			if( geom.doBoundsOverlap( enemyBounds, playerBounds ) ){
+				killPlayer();
+				socket.emit("hit", enemySpaceShip );
+				delete otherPlayers[enemySpaceShip.id];
+			}
+		}
+		
+	
+	}
+	
+	function checkMyLasersForHit(){
+		var laser;
+		for( var i=lasers.length - 1; i >= 0; i-- ){
+			laser = lasers[i];
+			
+			if( id == laser.emitterId ){ 
+				if( checkLaserForHit( laser ) ){
+					lasers.splice( i, 1 );
+				}
+			}
+		}  
+	}
+	
+	function checkLaserForHit(laser){
+			
+		var hit = false;
+		
+		for( var spaceShipId in otherPlayers ) {
+			
+			var enemySpaceShip = otherPlayers[spaceShipId];
+			
+			var bounds = geom.calculateBounds( geom.applyMatrixToPoints( points, enemySpaceShip.transform ) );
+			
+			
+			if( geom.isPointInsideBounds( laser, bounds ) )
+			{
+				hitSpaceShip(enemySpaceShip);
+				hit = true;
+				break;
+			}
+		}
+	
+		return hit;
+	}
+	
+	function hitSpaceShip(enemySpaceShip){
+		socket.emit("hit", enemySpaceShip );
+		score += 10;
+		delete otherPlayers[enemySpaceShip.id];
+	}
 	
 	function checkInput(){
 		if( VirtualJoystick.touchScreenAvailable() ){
@@ -312,13 +403,23 @@
 		updateLasers();
 				
 		/* update the players spaceship first */
-		updateSpaceShip( spaceShipData );	
+		if( spaceShipData ) updateSpaceShip( spaceShipData );	
 		
 		/* update all the other spaceships */
 		for( var spaceShipId in otherPlayers ) updateSpaceShip(otherPlayers[spaceShipId]);
 	
-		/* fire laser if space is down */
-		updateShooting();
+		/* check to see if the player has crashed into another */
+		if( spaceShipData ) checkForCollision();
+		
+		if( spaceShipData )
+		{
+		
+			/* fire laser if space is down */
+			updateShooting();
+			
+			/* have we hit anyone? */
+			checkMyLasersForHit();
+		}
 
 	
 		lastUpdate = currentTime;	
@@ -337,14 +438,33 @@
 		ctx.beginPath();
    
 		ctx.strokeStyle = laserColor;
+		
 		drawLasers();
 		ctx.stroke();
   
+		ctx.closePath();
+
+		
 		ctx.beginPath();
    
 		ctx.strokeStyle = shipColor;
-		drawSpaceShip(spaceShipData);
+		ctx.fillStyle = shipColor;
 		for( var spaceShipId in otherPlayers ) drawSpaceShip(otherPlayers[spaceShipId]);
+		
+		if( spaceShipData ) 
+		{
+			ctx.textAlign = "left";
+			ctx.font = "bold 12px monospace";
+			ctx.fillText("score: "+score, 10, 20 );
+			drawSpaceShip(spaceShipData);
+		}
+		else {	
+			
+			ctx.textAlign = "center";
+			ctx.font = "bold 12px monospace";
+			ctx.fillText("PRESS SPACE TO START", c.width/2, c.height/2);
+		}
+		
 		ctx.stroke();
   
 		ctx.closePath();
@@ -357,39 +477,41 @@
 	
 	function onUpdatePlayerPosition(data){
 		
-		if( data.id in otherPlayers ){
-			var playerData = otherPlayers[data.id];
-			playerData.vx = data.vx;
-			playerData.vy = data.vy;
-			playerData.vr = data.vr;
-			playerData.keys = data.keys;
-			if( Math.abs( data.x - playerData.x ) < 30 && Math.abs( data.y - playerData.y ) < 30 ){
+		var keyAlreadyExists =  data.id in otherPlayers ;
+		
+		if( ! keyAlreadyExists ) otherPlayers[data.id] = { x : data.x, y : data.y };
+		
+		var playerData = otherPlayers[data.id];
+		playerData.id = data.id;
+		playerData.vx = data.vx;
+		playerData.vy = data.vy;
+		playerData.vr = data.vr;
+		playerData.keys = data.keys;
+		if( Math.abs( data.x - playerData.x ) < 30 && Math.abs( data.y - playerData.y ) < 30 ){
 
-				playerData.x += ( data.x - playerData.x ) * 0.5;
-				playerData.y +=  ( data.y - playerData.y ) * 0.5;
+			playerData.x += ( data.x - playerData.x ) * 0.5;
+			playerData.y +=  ( data.y - playerData.y ) * 0.5;
 
-			}
-			else
-			{
-				playerData.x = data.x;
-				playerData.y = data.y;
-			}
-			playerData.rotation = data.rotation;
-			
 		}
-		else{
-			otherPlayers[data.id] = data;
+		else
+		{
+			playerData.x = data.x;
+			playerData.y = data.y;
 		}
+		
+		playerData.rotation = data.rotation;
+		
+		
 	}
 	
 	function onPlayerDisconnected(id){
-		console.log("player disconnected "+id);
+		//console.log("player disconnected "+id);
 	
 		delete otherPlayers[id];
 	}
 	
 	function updatePlayerPosition(){
-		socket.emit("updatePosition",spaceShipData);
+		if( spaceShipData ) socket.emit("updatePosition",spaceShipData);
 	}
 	function fireLaser(){
 	
@@ -417,6 +539,25 @@
 		socket.emit('newLaser', laser );
 	}
 	
+	function onPlayerKilled(ship){
+		/* If you, destroy your ship */
+		if( spaceShipData && spaceShipData.id == ship.id ) {
+			killPlayer();
+		}
+		else {
+			killEnemy(ship);
+		}
+	}
+	
+	function killPlayer(){
+		spaceShipData = null;
+		score = 0;
+	}
+	
+	function killEnemy(ship){
+		delete otherPlayers[ship.id];
+	}
+	
 	function onNewLaser(laser){
 		lasers.push(laser);
 	}
@@ -432,14 +573,14 @@
 	socket.on("updatePosition", onUpdatePlayerPosition );
 	socket.on("playerDisconnected", onPlayerDisconnected );
 	socket.on("newLaser", onNewLaser);
+	socket.on("playerKilled", onPlayerKilled );
 
 	socket.on("connect", function(){
-		console.log("connected");
-	
-		socket.emit('newPlayer', spaceShipData );
+		//console.log("connected");
+		
 	});
 	
-	console.log("trying to connect to "+id);
+	//console.log("trying to connect to "+id);
 	
 	</script>
 

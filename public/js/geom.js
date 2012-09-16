@@ -1,5 +1,51 @@
-geom = function(){
-	this.doesCircleIntersectWithLine(lineStart,lineEnd,centre,radius){
+
+geom = new (function(){
+
+	this.applyMatrixToPoints = function(points,transform){
+		
+		return points.map(function(v){ 
+			var p = transform.transformPoint(v.x,v.y);
+			return { 
+				x : p[0],
+				y : p[1]
+				//x : matrix.a * v.x + matrix.c * v.y + matrix.e, 
+				//y : matrix.b * v.x + matrix.d * v.y + matrix.f 
+			}; 
+		});
+	
+	}
+
+	this.calculateBounds = function(points){
+		
+		var xValues = points.map(function(val){ return val.x });
+		var yValues = points.map(function(val){ return val.y });
+	
+		var bounds = {
+			xMin : Math.min.apply(null,xValues),
+			xMax : Math.max.apply(null,xValues),
+			yMin : Math.min.apply(null,yValues),
+			yMax : Math.max.apply(null,yValues)
+		};
+		
+		return bounds;
+	}
+
+	this.isPointInsideBounds = function(point,bounds){
+	
+		var horizontal = bounds.xMin < point.x && point.x < bounds.xMax;
+		var vertical = bounds.yMin < point.y && point.y < bounds.yMax;
+	
+		return horizontal && vertical ;
+	}
+	
+	this.doBoundsOverlap = function(boundsA,boundsB){
+		var horizontal = ( boundsA.xMin < boundsB.xMax && boundsB.xMin < boundsA.xMax );
+		var vertical = ( boundsA.yMin < boundsB.yMax && boundsB.yMin < boundsA.yMax );
+		
+		return horizontal && vertical;
+	}
+
+	this.doesCircleIntersectWithLine = function(lineStart,lineEnd,centre,radius){
 		//if not then find the intersection point between the line and circle direction as a time along A
 		var u = this.calculateIntersection(lineStart,lineEnd, this.originPoint(), center );
 		
@@ -40,11 +86,11 @@ geom = function(){
 		return x*x+y*y;
 	}
 	
-	this.originPoint(){
+	this.originPoint = function(){
 		return { x : 0, y : 0 };
 	}
 	
-	this.subtractPoint( p1, p2 ){
+	this.subtractPoint = function( p1, p2 ){
 		return { x : p1.x - p2.x, y : p1.y - p2.y  };
 	}
-}
+})();
