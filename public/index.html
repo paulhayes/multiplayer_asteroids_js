@@ -186,7 +186,8 @@
 {
   
 		
-		/* if the user has pressed up then 
+		/* 
+		if the user has pressed up then 
 		calculate the horizontal component of the thrust ( Math.cos ) 
        
 		calculate the vertical component of the thrust ( Math.sin )
@@ -218,7 +219,6 @@
 			spaceShipData.ar = 0.25;
 		}
 				
-		timeElapsedSinceLastLaser += deltaTime;
 		
 		spaceShipData.vx += spaceShipData.ax;
 		spaceShipData.vy += spaceShipData.ay;
@@ -273,6 +273,9 @@
 		if ( spaceShipData.keys[SPACEBAR] ) {
 			fireLaser();
 		}
+		
+		timeElapsedSinceLastLaser += deltaTime;
+		
 
 	}
 
@@ -307,15 +310,16 @@
 		
 		/* move the position of the lasers */
 		updateLasers();
-		
-		/* fire laser if space is down */
-		updateShooting();
-		
+				
 		/* update the players spaceship first */
 		updateSpaceShip( spaceShipData );	
 		
 		/* update all the other spaceships */
 		for( var spaceShipId in otherPlayers ) updateSpaceShip(otherPlayers[spaceShipId]);
+	
+		/* fire laser if space is down */
+		updateShooting();
+
 	
 		lastUpdate = currentTime;	
 	}
@@ -402,8 +406,8 @@
 			
 		laser.x = spaceShipData.x + 2 * SHIP_SCALE * dx;
 		laser.y = spaceShipData.y + -2 * SHIP_SCALE * dy;
-		laser.vx = 10 * dx + 0 * spaceShipData.vx;
-		laser.vy = -10 * dy + 0 * spaceShipData.vy;
+		laser.vx = 10 * dx + spaceShipData.vx;
+		laser.vy = -10 * dy + spaceShipData.vy;
 		laser.lx = 10 * dx;
 		laser.ly = -10 * dy;
 		laser.emitterId = spaceShipData.id;
