@@ -217,21 +217,14 @@
 		
 			spaceShipData.ar = 0.25;
 		}
-		
-		if ( spaceShipData.keys[SPACEBAR] ) {
-			fireLaser();
-		}
-		
+				
 		timeElapsedSinceLastLaser += deltaTime;
 		
-		
-			
-	
 		spaceShipData.vx += spaceShipData.ax;
 		spaceShipData.vy += spaceShipData.ay;
 		spaceShipData.vr += spaceShipData.ar;
 	
-		/* increment the spaceship positon by the velocity */
+		/* move the spaceship positon by the velocity */
   
 		spaceShipData.x += spaceShipData.vx;
 		spaceShipData.y += spaceShipData.vy;
@@ -275,6 +268,13 @@
 		spaceShipData.vy *= 0.99;
 
 	}
+	
+	function updateShooting(){
+		if ( spaceShipData.keys[SPACEBAR] ) {
+			fireLaser();
+		}
+
+	}
 
 
 	
@@ -299,16 +299,22 @@
 		var currentTime = new Date().getTime() * 0.001;
 		deltaTime = currentTime - lastUpdate;
 	
-		// read user input
-   
-		// adjust position
- 
-		checkInput(); 
-  
+		/* check joystick positions for touchscreen devices */
+		checkInput();
+		
+		/* move the position of the asteroids */
 		updateAsteroids();
-  
+		
+		/* move the position of the lasers */
 		updateLasers();
+		
+		/* fire laser if space is down */
+		updateShooting();
+		
+		/* update the players spaceship first */
 		updateSpaceShip( spaceShipData );	
+		
+		/* update all the other spaceships */
 		for( var spaceShipId in otherPlayers ) updateSpaceShip(otherPlayers[spaceShipId]);
 	
 		lastUpdate = currentTime;	
