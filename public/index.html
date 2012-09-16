@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<script class="jsbin" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<meta charset=utf-8 />
+  <title></title>
+  <style>
+  	#container {
+			width		: 100%;
+			height		: 100%;
+			overflow	: hidden;
+			padding		: 0;
+			margin		: 0;
+			-webkit-user-select	: none;
+			-moz-user-select	: none;
+		}
+  
+    canvas { border: none; display: block; margin: auto; 
+      background-color: #000000;    
+    }
+  </style>
+  <style id="jsbin-css"></style>
+</head>
+<script src="js/request_animation_frame.js" ></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/virtualjoystick.js"></script>
+<body>
+	<div id="container">
+  <canvas></canvas>
+  	</div>
+  <script>
+    // setup
+    var c = document.getElementsByTagName('canvas')[0],
+    ctx = c.getContext('2d');
+    
+    var joystick	= new VirtualJoystick({
+				container	: document.getElementById('container'),
+				mouseSupport	: false
+			});
+
+    c.height = 480; //window.innerHeight - 20;
+    c.width = 640; //window.innerWidth - 20;
+    
+    var url = window.location.href;
+    var id = Math.round(0xffffff*Math.random()).toString(16);
+    var socket = io.connect(url);
+	var rad2deg = 180 / Math.PI;
+	var deg2rad = Math.PI / 180;
+	var shipColor = "#fff";
+	var laserColor = "#0f0";
+	var spaceShipData = { x : c.width / 2, y : c.height/ 2, vx : 0, vy : 0, rotation : 0, id : id, vr : 0, ar : 0, ax : 0, ay : 0, keys : {} };
+	var asteroids = [];
+	var lasers = [];
+	var keysPressed = {};
+	var SHIP_SCALE = 4;
+	var UP_KEY = 38, DOWN_KEY = 40, LEFT_KEY = 37, RIGHT_KEY = 39, SPACEBAR = 32 ;
+	var otherPlayers = {};
+	var deltaTime;
+	var lastUpdate = new Date().getTime() * 0.001;
+	var lastDraw = new Date().getTime() * 0.001;
+	var timeElapsedSinceLastLaser = 0;
+	
+	
+	
+	window.addEventListener ("keydown", function(e){
+		
+		keysPressed[e.keyCode] = true;
+		if( spaceShipData ){ 
+			spaceShipData.keys = keysPressed;
+			updatePlayerPosition();
+		}
+	});
+
+	window.addEventListener ("keyup", function(e){
+		keysPressed[e.keyCode] = false;
+		if( spaceShipData ) {
+			spaceShipData.keys = keysPressed;
+			updatePlayerPosition();
+		}
+		
+	});
+	
+	
+
+	
+	function drawLine( start, end ) {
+  
+		ctx.moveTo(start.x,start.y);
+  
+		ctx.lineTo(end.x,end.y);
+
+		
+	}
+	
+	function drawLasers(){
+		
+		for(var i=lasers.length-1;i>=0;i--){
+			drawLaser(lasers[i]);
+		}
+		
+	}
+	
+	function drawLaser(laser) {
+		var start = { x:laser.x , y:laser.y };
+		var end = { x:laser.lx + laser.x , y:laser.ly + laser.y };
+		drawLine( start, end );
+	}
+	
+	function drawSpaceShip(spaceShipData){
+		var x = spaceShipData.x,
+			y = spaceShipData.y;
+		ctx.save();
+		ctx.translate(x,y);
+		ctx.rotate( spaceShipData.rotation * deg2rad );
+		ctx.translate(0,-0.5);
+		ctx.scale(SHIP_SCALE,SHIP_SCALE);
+		var a = { x : 0, y : -2 };
+		var b = { x : -2, y : 2 };
+		var c = { x : 2, y : 2 };
+		var d = { x : 0, y : 1 };
+		drawLine(b,a);
+		drawLine(a,c);
+		drawLine(c,d);
+		drawLine(d,b);
+		ctx.restore();
+
+	}
+
+
+	
+	function clearScreen(){
+		// Store the current transformation matrix
+		ctx.save();
+		// Use the identity matrix while clearing the canvas
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
+		ctx.clearRect(0, 0, c.width, c.height);
+		// Restore the transform
+  ctx.restore();
+
+	}
+
+
+	
+	function updateAsteroids()
+{
+    
+		/* While number of asteroids is smaller than the target number of asteroid,
+          
+		create a new asteroid 
+    
+		*/
+  
+    
+		
+		/* For each asteroid
+          
+		Update the position of that asteroid 
+    
+		*/
+
+	}
+
+
+	
+	
+	
+	function updateLasers(){
+		for(var i=0; i < lasers.length; i++){
+			if( isPointOutOfBounds( lasers[i] ) ){
+				lasers.splice( i, 1 );
+				i--;
+				continue;
+			}
+			updateLaser( lasers[i] );
+		} 
+	}
+	
+	function updateLaser(laser){
+		laser.x += laser.vx;
+		laser.y += laser.vy;
+		
+	}
+	
+	function updateSpaceShip( spaceShipData )
+{
+  
+		
+		/* if the user has pressed up then 
+		calculate the horizontal component of the thrust ( Math.cos ) 
+       
+		calculate the vertical component of the thrust ( Math.sin )
+    
+		*/
+  
+		
+		if( spaceShipData.keys[UP_KEY] ){
+			spaceShipData.ax = 0.1 * Math.sin( deg2rad * spaceShipData.rotation );
+			spaceShipData.ay = -0.1 * Math.cos( deg2rad * spaceShipData.rotation );
+		}else
+		{
+			spaceShipData.ax = spaceShipData.ay = 0;
+		}
+		
+		spaceShipData.ar =  0;
+
+		/* if the user has pressed left, decrease the space ship rotation angle */
+ 
+		if( spaceShipData.keys[LEFT_KEY] )
+		{
+			spaceShipData.ar = -0.25;
+		}
+		/* if the user has pressed right, increase the space ship rotation angle */
+  
+
+		else if( spaceShipData.keys[RIGHT_KEY] ){
+		
+			spaceShipData.ar = 0.25;
+		}
+		
+		if ( spaceShipData.keys[SPACEBAR] ) {
+			fireLaser();
+		}
+		
+		timeElapsedSinceLastLaser += deltaTime;
+		
+		
+			
+	
+		spaceShipData.vx += spaceShipData.ax;
+		spaceShipData.vy += spaceShipData.ay;
+		spaceShipData.vr += spaceShipData.ar;
+	
+		/* increment the spaceship positon by the velocity */
+  
+		spaceShipData.x += spaceShipData.vx;
+		spaceShipData.y += spaceShipData.vy;
+		spaceShipData.rotation += spaceShipData.vr;
+		/* if the spaceship is off the screen, move it to the other side */
+		
+		if(spaceShipData.y < 0)
+ {
+  
+			(spaceShipData.y) += c.height;
+  
+		}
+  
+		
+		if(spaceShipData.x < 0)
+{
+  
+			spaceShipData.x += c.width; 
+  
+		}
+
+  
+		
+		if(spaceShipData.x > c.width) {
+			spaceShipData.x -= c.width;
+  
+		}
+
+  
+		
+		if(spaceShipData.y > c.height)
+{
+    
+			spaceShipData.y -= c.height;
+  
+		}
+
+		
+		spaceShipData.vr *= 0.95;
+		spaceShipData.vx *= 0.99;
+		spaceShipData.vy *= 0.99;
+
+	}
+
+
+	
+	function checkInput(){
+		if( VirtualJoystick.touchScreenAvailable() ){
+			spaceShipData.keys[RIGHT_KEY] = joystick.right();
+			spaceShipData.keys[LEFT_KEY] = joystick.left();
+			spaceShipData.keys[UP_KEY] = joystick.up();
+			spaceShipData.keys[DOWN_KEY] = joystick.down();
+		}
+	}
+	
+	function isPointOutOfBounds(point){
+		var inVertical = (point.x < 0) || (point.x > c.width);
+		var inHorizontal = (point.y < 0) || (point.y > c.height);
+		
+		return inVertical || inHorizontal;
+	}
+	
+	function update() {
+		
+		var currentTime = new Date().getTime() * 0.001;
+		deltaTime = currentTime - lastUpdate;
+	
+		// read user input
+   
+		// adjust position
+ 
+		checkInput(); 
+  
+		updateAsteroids();
+  
+		updateLasers();
+		updateSpaceShip( spaceShipData );	
+		for( var spaceShipId in otherPlayers ) updateSpaceShip(otherPlayers[spaceShipId]);
+	
+		lastUpdate = currentTime;	
+	}
+	
+	function updateScreen(){
+  
+ 
+	
+		var currentTime = new Date().getTime() * 0.001;
+		deltaTime = currentTime - lastDraw;
+
+	  
+		clearScreen();
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+   
+		ctx.strokeStyle = laserColor;
+		drawLasers();
+		ctx.stroke();
+  
+		ctx.beginPath();
+   
+		ctx.strokeStyle = shipColor;
+		drawSpaceShip(spaceShipData);
+		for( var spaceShipId in otherPlayers ) drawSpaceShip(otherPlayers[spaceShipId]);
+		ctx.stroke();
+  
+		ctx.closePath();
+
+		
+		window.requestAnimationFrame( updateScreen );
+
+		lastDraw = currentTime;
+	}
+	
+	function onUpdatePlayerPosition(data){
+		
+		if( data.id in otherPlayers ){
+			var playerData = otherPlayers[data.id];
+			playerData.vx = data.vx;
+			playerData.vy = data.vy;
+			playerData.vr = data.vr;
+			playerData.keys = data.keys;
+			if( Math.abs( data.x - playerData.x ) < 30 && Math.abs( data.y - playerData.y ) < 30 ){
+
+				playerData.x += ( data.x - playerData.x ) * 0.5;
+				playerData.y +=  ( data.y - playerData.y ) * 0.5;
+
+			}
+			else
+			{
+				playerData.x = data.x;
+				playerData.y = data.y;
+			}
+			playerData.rotation = data.rotation;
+			
+		}
+		else{
+			otherPlayers[data.id] = data;
+		}
+	}
+	
+	function onPlayerDisconnected(id){
+		console.log("player disconnected "+id);
+	
+		delete otherPlayers[id];
+	}
+	
+	function updatePlayerPosition(){
+		socket.emit("updatePosition",spaceShipData);
+	}
+	function fireLaser(){
+	
+		if( timeElapsedSinceLastLaser < 0.1 ){
+			return;
+		}
+		
+		timeElapsedSinceLastLaser = 0;
+	
+		var laser = { lx : 0, ly : 0, vx : 0, vy : 0, x : 0, y : 0 };
+		
+		var dx = Math.sin( deg2rad * spaceShipData.rotation ),
+			dy = Math.cos( deg2rad * spaceShipData.rotation );
+			
+		laser.x = spaceShipData.x + 2 * SHIP_SCALE * dx;
+		laser.y = spaceShipData.y + -2 * SHIP_SCALE * dy;
+		laser.vx = 10 * dx + 0 * spaceShipData.vx;
+		laser.vy = -10 * dy + 0 * spaceShipData.vy;
+		laser.lx = 10 * dx;
+		laser.ly = -10 * dy;
+		laser.emitterId = spaceShipData.id;
+
+		lasers.push( laser );
+		
+		socket.emit('newLaser', laser );
+	}
+	
+	function onNewLaser(laser){
+		lasers.push(laser);
+	}
+	
+	
+	setInterval( update, 20 );
+
+	setInterval( updatePlayerPosition, 100 );
+
+	
+	window.requestAnimationFrame( updateScreen );
+	
+	socket.on("updatePosition", onUpdatePlayerPosition );
+	socket.on("playerDisconnected", onPlayerDisconnected );
+	socket.on("newLaser", onNewLaser);
+
+	socket.on("connect", function(){
+		console.log("connected");
+	
+		socket.emit('newPlayer', spaceShipData );
+	});
+	
+	console.log("trying to connect to "+id);
+	
+	</script>
+
+	</body>
+</html>
