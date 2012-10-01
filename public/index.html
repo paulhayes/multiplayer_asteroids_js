@@ -52,7 +52,7 @@
 	var shipColor = "#fff";
 	var laserColor = "#0f0";
 	var spaceShipData = null; 
-	var asteroids = [];
+	var asteroids = [ { x : 100, y : 100, radius : 30, radiusMap : [0,0,0,0,0,0,0,0,0,5,5,5,5,5,5,0,0,0,0,0,3,3,3,0,0,0,0,0,0,5,5,5,5,5,5,5] } ];
 	var lasers = [];
 	var keysPressed = {};
 	var SHIP_SCALE = 4;
@@ -111,6 +111,50 @@
   
 		ctx.lineTo(end.x,end.y);
 
+		
+	}
+	
+	function drawAsteroid( asteroid ){
+		var x = asteroid.x;
+		var y = asteroid.y;
+		var r = asteroid.radius;
+		var lastPosition;
+		var position = {}; 
+		var i = 0;
+		console.log( asteroid );
+	
+		/* for values of alpha starting at 0 and ending at 360 */
+		for (var alpha= 0; alpha <= 360; alpha += 5){ 
+		
+			var radius = r + asteroid.radiusMap[i % asteroid.radiusMap.length ];
+			
+			/* calculate new position,  x=r*sin(alpha), y=r*cos(alpha); */
+ 			position.x = x + radius * Math.sin( alpha * deg2rad );
+ 			position.y = y + radius * Math.cos( alpha * deg2rad );
+ 		
+ 			
+			/* if last position exists then: */
+			if( lastPosition )
+			{
+				drawLine( lastPosition, position );
+			}
+			else
+			{
+				lastPosition = {};
+			}
+		
+		
+			/* draw a line from the last position to the new position */
+		
+			/* store position onto last the position */	
+		
+		
+			lastPosition.x = position.x;
+			lastPosition.y = position.y;
+	
+			i++;
+		}
+		
 		
 	}
 	
@@ -439,7 +483,8 @@
    
 		ctx.strokeStyle = laserColor;
 		
-		drawLasers();
+drawLasers();
+		
 		ctx.stroke();
   
 		ctx.closePath();
@@ -464,6 +509,9 @@
 			ctx.font = "bold 12px monospace";
 			ctx.fillText("PRESS SPACE TO START", c.width/2, c.height/2);
 		}
+		
+		for( var asteroidId in asteroids ) drawAsteroid( asteroids[asteroidId] );
+	
 		
 		ctx.stroke();
   
