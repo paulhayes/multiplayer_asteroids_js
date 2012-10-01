@@ -114,19 +114,26 @@
 		
 	}
 	
-	function drawAsteroid( asteroid ){
-		var x = asteroid.x;
-		var y = asteroid.y;
-		var r = asteroid.radius;
-		var lastPosition;
-		var position = {}; 
-		var i = 0;
-		console.log( asteroid );
+	function drawAsteroids(){
+		for(var i=asteroid.length-1;i>=0;i--) {
+			drawAsteroid(asteroid[i]);
+		}
+	}
 	
+	function drawAsteroid( asteroid ){
+		var x = asteroid.x,
+			y = asteroid.y,
+			defaultRadius = asteroid.radius,
+			radius,
+			radiusMap = asteroid.radiusMap,
+			lastPosition,
+			position = {}, 
+			i = 0;
+			
 		/* for values of alpha starting at 0 and ending at 360 */
 		for (var alpha= 0; alpha <= 360; alpha += 5){ 
 		
-			var radius = r + asteroid.radiusMap[i % asteroid.radiusMap.length ];
+			radius = defaultRadius + radiusMap[i % radiusMap.length ];
 			
 			/* calculate new position,  x=r*sin(alpha), y=r*cos(alpha); */
  			position.x = x + radius * Math.sin( alpha * deg2rad );
