@@ -44,6 +44,15 @@ geom = new (function(){
 		
 		return horizontal && vertical;
 	}
+	
+	this.doesPointLieWithinCircle = function(point, centre, radius ){
+		var x = point.x - centre.x ;
+		var y = point.y - centre.y ;
+		var h2 = ( x*x + y*y );
+		var r2 = radius * radius;
+		
+		return h2 < r2;
+	}
 
 	this.doesCircleIntersectWithLine = function(lineStart,lineEnd,centre,radius){
 		//if not then find the intersection point between the line and circle direction as a time along A

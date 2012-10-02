@@ -52,7 +52,8 @@
 	var shipColor = "#fff";
 	var laserColor = "#0f0";
 	var spaceShipData = null; 
-	var asteroids = [ { x : 100, y : 100, radius : 30, radiusMap : [0,0,0,0,0,0,0,0,0,5,5,5,5,5,5,0,0,0,0,0,3,3,3,0,0,0,0,0,0,5,5,5,5,5,5,5] } ];
+	var asteroids = [ { x : 100, y : 100, radius : 30, vx : 1, vy : 1, vr : 0 } ];
+	var radiusMap = [0,0,-2,-2,0,0,0,0,0,5,5,4,5,5,5,0,0,0,0,0,3,3,3,0,0,0,0,0,0,5,5,5,5,5,5,5];
 	var lasers = [];
 	var keysPressed = {};
 	var SHIP_SCALE = 4;
@@ -125,7 +126,6 @@
 			y = asteroid.y,
 			defaultRadius = asteroid.radius,
 			radius,
-			radiusMap = asteroid.radiusMap,
 			lastPosition,
 			position = {}, 
 			i = 0;
@@ -226,7 +226,10 @@
 		*/
   
     
-		
+		for(var i=0; i < asteroids.length; i++){
+
+			updateAsteroid( asteroids[i] );
+		} 
 		/* For each asteroid
           
 		Update the position of that asteroid 
@@ -237,6 +240,49 @@
 
 
 	
+	function updateAsteroid(asteroid){
+	/* move the spaceship positon by the velocity */
+  
+		asteroid.x += asteroid.vx;
+		asteroid.y += asteroid.vy;
+		asteroid.rotation += asteroid.vr;
+		/* if the spaceship is off the screen, move it to the other side */
+		
+		if(asteroid.y < 0)
+ {
+  
+			(asteroid.y) += c.height;
+  
+		}
+  
+		
+		if(asteroid.x < 0)
+{
+  
+			asteroid.x += c.width; 
+  
+		}
+
+  
+		
+		if(asteroid.x > c.width) {
+			asteroid.x -= c.width;
+  
+		}
+
+  
+		
+		if(asteroid.y > c.height)
+{
+    
+			asteroid.y -= c.height;
+  
+		}
+
+		
+		
+		
+	}
 	
 	
 	function updateLasers(){
@@ -382,9 +428,38 @@
 	
 	}
 	
+	function checkMyLasersHitAsteroid(){
+		var laser;
+		for( var i=lasers.length-1; i >= 0; i-- ){
+			laser = lasers[i];
+			
+			if( id == laser.emitterId ){ 
+				if( checkLaserHitAsteroid( laser ) ){
+					lasers.splice( i, 1 );
+				}
+			}
+		}  
+	}
+	
+	function checkLaserHitAsteroid(laser){
+		var hit = false;
+		var asteroid;
+		
+		for( var i=asteroids.length-1; i >= 0 ; i-- ){
+			asteroid = asteroids[i];
+			if( geom.doesPointLieWithinCircle( laser, asteroid, asteroid.radius ) ){
+				hit = true;
+				asteroids.splice(i,1);
+				break;
+			}
+		}
+		
+		return hit; 
+	}
+	
 	function checkMyLasersForHit(){
 		var laser;
-		for( var i=lasers.length - 1; i >= 0; i-- ){
+		for( var i=lasers.length-1; i >= 0; i-- ){
 			laser = lasers[i];
 			
 			if( id == laser.emitterId ){ 
@@ -469,6 +544,7 @@
 			updateShooting();
 			
 			/* have we hit anyone? */
+			checkMyLasersHitAsteroid();
 			checkMyLasersForHit();
 		}
 
