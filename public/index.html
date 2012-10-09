@@ -133,7 +133,7 @@
 		/* for values of alpha starting at 0 and ending at 360 */
 		for (var alpha= 0; alpha <= 360; alpha += 5){ 
 		
-			radius = defaultRadius + radiusMap[i % radiusMap.length ];
+			radius = defaultRadius + defaultRadius * radiusMap[i % radiusMap.length ] * 1/30;
 			
 			/* calculate new position,  x=r*sin(alpha), y=r*cos(alpha); */
  			position.x = x + radius * Math.sin( alpha * deg2rad );
@@ -450,12 +450,26 @@
 			if( geom.doesPointLieWithinCircle( laser, asteroid, asteroid.radius ) ){
 				hit = true;
 				asteroids.splice(i,1);
+				var newRadius = asteroid.radius * 0.7;
+				if( newRadius < 5 ) break;
+				
+				m = 10;
+				var leftAsteroidDirection = rotateBy90( { x : asteroid.vx , y : asteroid.vy  } );
+				var rightAsteroidDirection = rotateByNeg90( { x : asteroid.vx , y : asteroid.vy  } );
+
+				var leftAsteroidPosition = { x : asteroid.x +  m * leftAsteroidDirection.x , y : asteroid.y + m * leftAsteroidDirection.y };				
+				var rightAsteroidPosition = { x : asteroid.x +  m * rightAsteroidDirection.x , y : asteroid.y + m * rightAsteroidDirection.y };
+				
+				spawnNewAsteroid( leftAsteroidPosition, leftAsteroidDirection, newRadius );
+				spawnNewAsteroid( rightAsteroidPosition, rightAsteroidDirection, newRadius );
 				break;
 			}
 		}
 		
 		return hit; 
 	}
+	
+	
 	
 	function checkMyLasersForHit(){
 		var laser;
@@ -693,6 +707,37 @@ drawLasers();
 		lasers.push(laser);
 	}
 	
+	function rotateBy90(v){
+		var tmp;
+		v = { x:v.x, y:v.y };
+		tmp = v.y;
+		v.y = v.x; 
+		v.x = tmp;
+		v.y = -v.y;
+		return v;
+	}
+	function rotateByNeg90(v){
+		var tmp;
+		v = { x:v.x, y:v.y };
+		tmp = v.y;
+		v.y = v.x; 
+		v.x = tmp;
+		v.x = -v.x;
+		return v;
+	}
+	
+	function spawnNewAsteroid( position, direction, radius )
+	{
+		asteroids.push( { 
+			x : position.x, 
+			y : position.y, 
+			radius : radius, 
+			vx : direction.x, 
+			vy : direction.y, 
+			vr : 0 
+		});
+	}
+		
 	
 	setInterval( update, 20 );
 
@@ -711,7 +756,6 @@ drawLasers();
 		
 	});
 	
-	//console.log("trying to connect to "+id);
 	
 	</script>
 
