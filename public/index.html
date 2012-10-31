@@ -290,20 +290,6 @@
 	
 	function updateLasers(){
 		for(var i=0; i < lasers.length; i++){
-
-      if( lasers[i].x > c.width ) {
-        lasers[i].x -= c.width;
-      }
-      if( lasers[i].x < 0 ) {
-        lasers[i].x += c.width;
-      }
-      if( lasers[i].y > c.height ) {
-        lasers[i].y -= c.height;
-      }
-      if( lasers[i].y < 0 ) {
-        lasers[i].y += c.height;
-      }
-
 			if( isLaserOutOfRange( lasers[i] ) ){
 				lasers.splice( i, 1 );
 				i--;
