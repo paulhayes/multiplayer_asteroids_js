@@ -63,6 +63,9 @@
 	var lastUpdate = new Date().getTime() * 0.001;
 	var lastDraw = new Date().getTime() * 0.001;
 	var timeElapsedSinceLastLaser = 0;
+  var timeBetweenLaserFirings = 0.25;
+  var laserRange = 200;
+  var laserSize = 10;
 	var score = 0;
 	
 	var points = [
@@ -287,7 +290,21 @@
 	
 	function updateLasers(){
 		for(var i=0; i < lasers.length; i++){
-			if( isPointOutOfBounds( lasers[i] ) ){
+
+      if( lasers[i].x > c.width ) {
+        lasers[i].x -= c.width;
+      }
+      if( lasers[i].x < 0 ) {
+        lasers[i].x += c.width;
+      }
+      if( lasers[i].y > c.height ) {
+        lasers[i].y -= c.height;
+      }
+      if( lasers[i].y < 0 ) {
+        lasers[i].y += c.height;
+      }
+
+			if( isLaserOutOfRange( lasers[i] ) ){
 				lasers.splice( i, 1 );
 				i--;
 				continue;
@@ -299,6 +316,13 @@
 	function updateLaser(laser){
 		laser.x += laser.vx;
 		laser.y += laser.vy;
+
+    laser.dx += laser.vx;
+    laser.dy += laser.vy;
+    if(laser.x > c.width) { laser.x -= c.width; }
+    if(laser.x < 0) { laser.x += c.width; }
+    if(laser.y > c.height) { laser.y -= c.height; }
+    if(laser.y < 0) { laser.y += c.height; }
 		
 	}
 	
@@ -527,6 +551,12 @@
 		
 		return inVertical || inHorizontal;
 	}
+
+  function isLaserOutOfRange(laser) {
+    var inVertical = (Math.abs(laser.dx) > laser.mx);
+    var inHorizontal = (Math.abs(laser.dy) > laser.my);
+    return inVertical || inHorizontal;
+  }
 	
 	function update() {
 		
@@ -678,6 +708,10 @@ drawLasers();
 		laser.lx = 10 * dx;
 		laser.ly = -10 * dy;
 		laser.emitterId = spaceShipData.id;
+    laser.dx = 0;
+    laser.dy = 0;
+    laser.mx = Math.abs( laserRange * dx);
+    laser.my = Math.abs( laserRange * dy);
 
 		lasers.push( laser );
 		
