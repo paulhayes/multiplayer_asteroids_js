@@ -303,13 +303,15 @@
 		laser.x += laser.vx;
 		laser.y += laser.vy;
 
-    laser.dx += laser.vx;
-    laser.dy += laser.vy;
-    if(laser.x > c.width) { laser.x -= c.width; }
-    if(laser.x < 0) { laser.x += c.width; }
-    if(laser.y > c.height) { laser.y -= c.height; }
-    if(laser.y < 0) { laser.y += c.height; }
-		
+	    laser.dx += laser.vx;
+	    laser.dy += laser.vy;
+	    laser.distanceRemaining -= laser.speed;
+
+	    if(laser.x > c.width) { laser.x -= c.width; }
+	    if(laser.x < 0) { laser.x += c.width; }
+	    if(laser.y > c.height) { laser.y -= c.height; }
+	    if(laser.y < 0) { laser.y += c.height; }
+			
 	}
 	
 	function updateSpaceShip( spaceShipData )
@@ -538,11 +540,9 @@
 		return inVertical || inHorizontal;
 	}
 
-  function isLaserOutOfRange(laser) {
-    var inVertical = (Math.abs(laser.dx) > laser.mx);
-    var inHorizontal = (Math.abs(laser.dy) > laser.my);
-    return inVertical || inHorizontal;
-  }
+	function isLaserOutOfRange(laser) {
+		return laser.distanceRemaining <= 0;
+	}
 	
 	function update() {
 		
@@ -685,19 +685,20 @@ drawLasers();
 		var laser = { lx : 0, ly : 0, vx : 0, vy : 0, x : 0, y : 0 };
 		
 		var dx = Math.sin( deg2rad * spaceShipData.rotation ),
-			dy = Math.cos( deg2rad * spaceShipData.rotation );
-			
+			dy = Math.cos( deg2rad * spaceShipData.rotation ),
+			speed = 10;
+		
+
+
 		laser.x = spaceShipData.x + 2 * SHIP_SCALE * dx;
 		laser.y = spaceShipData.y + -2 * SHIP_SCALE * dy;
-		laser.vx = 10 * dx + spaceShipData.vx;
-		laser.vy = -10 * dy + spaceShipData.vy;
-		laser.lx = 10 * dx;
-		laser.ly = -10 * dy;
+		laser.vx = speed * dx + spaceShipData.vx;
+		laser.vy = -speed * dy + spaceShipData.vy;
+		laser.lx = speed * dx;
+		laser.ly = -speed * dy;
 		laser.emitterId = spaceShipData.id;
-    laser.dx = 0;
-    laser.dy = 0;
-    laser.mx = Math.abs( laserRange * dx);
-    laser.my = Math.abs( laserRange * dy);
+	    laser.distanceRemaining = laserRange;
+	    laser.speed = speed;
 
 		lasers.push( laser );
 		
