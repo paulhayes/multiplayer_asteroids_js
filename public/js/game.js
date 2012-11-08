@@ -33,9 +33,10 @@ game=(function(){
 	var lastDraw = new Date().getTime() * 0.001;
 	var isPlayerMaster = false;
 	var timeElapsedSinceLastLaser = 0;
-	var asteroidSpeed = 10;
+	var asteroidSpeed = 3;
   var timeBetweenLaserFirings = 0.25;
-  var laserRange = 200;
+  var maxRadiusSum = 60;
+  var laserRange = 300;
   var laserSize = 10;
 	var score = 0;
 	
@@ -199,13 +200,10 @@ game=(function(){
 		for( var id in asteroids ){
 			radiusSum += asteroids[id].radius;
 		}
-
-
 		
-		while( radiusSum < 150 ){
+		while( radiusSum < maxRadiusSum ){
 		
 			var randomAngle = Math.random() * 360 * deg2rad;
-			var asteroidSpeed = 5;
 		
 			var position = { x : Math.random() * c.width, y : Math.random() * c.height}, 
 			direction = { x : asteroidSpeed * Math.sin( randomAngle ) , y : asteroidSpeed * Math.cos( randomAngle ) }, 
@@ -421,7 +419,23 @@ game=(function(){
 		
 	
 	}
-	
+
+	function checkForPlayerAsteroidCollision(){
+
+		var playerBounds = geom.calculateBounds( geom.applyMatrixToPoints( points, spaceShipData.transform ) );
+
+		for( var asteroidId in asteroids ) {			
+			var asteroid = asteroids[asteroidId];
+			
+			if( geom.doesCircleOverlapWithBounds( asteroid, asteroid.radius, playerBounds ) ){
+				
+				killPlayer();
+				playerDestroyAsteroid(asteroidId);
+				
+			}
+		}
+	}
+
 	function checkMyLasersHitAsteroid(){
 		var laser;
 		for( var i=lasers.length-1; i >= 0; i-- ){
@@ -445,31 +459,39 @@ game=(function(){
 				hit = true;
 				//asteroids.splice(i,1);
 				
-				destroyAsteroid( id );
-
-				var newRadius = asteroid.radius * 0.7;
-				if( newRadius < 5 ) {
-				}
-					break;
-
-				var leftAsteroidDirection = rotateBy90( { x : asteroid.vx , y : asteroid.vy  } );
-				var rightAsteroidDirection = rotateByNeg90( { x : asteroid.vx , y : asteroid.vy  } );
-
-				var leftAsteroidPosition = { x : asteroid.x + asteroidSpeed * leftAsteroidDirection.x , y : asteroid.y + asteroidSpeed * leftAsteroidDirection.y };				
-				var rightAsteroidPosition = { x : asteroid.x + asteroidSpeed * rightAsteroidDirection.x , y : asteroid.y + asteroidSpeed * rightAsteroidDirection.y };
-				
-				var asteroid1 = spawnNewAsteroid( leftAsteroidPosition, leftAsteroidDirection, newRadius );
-				var asteroid2 = spawnNewAsteroid( rightAsteroidPosition, rightAsteroidDirection, newRadius );
-
-				socket.emit('asteroidDestroyed', id, [asteroid1,asteroid2])
-				masterUpdate();
-
+				playerDestroyAsteroid(id);
 
 				break;
 			}
 		}
 		
 		return hit; 
+	}
+
+	function playerDestroyAsteroid(id){
+
+		var asteroid = asteroids[id];
+
+		destroyAsteroid( id );
+
+		var newRadius = asteroid.radius * 0.7;
+		
+		if( newRadius < 5 ) {
+			return;
+		}
+
+		var leftAsteroidDirection = rotateBy90( { x : asteroid.vx , y : asteroid.vy  } );
+		var rightAsteroidDirection = rotateByNeg90( { x : asteroid.vx , y : asteroid.vy  } );
+
+		var leftAsteroidPosition = { x : asteroid.x + asteroidSpeed * leftAsteroidDirection.x , y : asteroid.y + asteroidSpeed * leftAsteroidDirection.y };				
+		var rightAsteroidPosition = { x : asteroid.x + asteroidSpeed * rightAsteroidDirection.x , y : asteroid.y + asteroidSpeed * rightAsteroidDirection.y };
+		
+		var asteroid1 = spawnNewAsteroid( leftAsteroidPosition, leftAsteroidDirection, newRadius );
+		var asteroid2 = spawnNewAsteroid( rightAsteroidPosition, rightAsteroidDirection, newRadius );
+
+		socket.emit('asteroidDestroyed', id, [asteroid1,asteroid2])
+		masterUpdate();
+
 	}
 	
 	
@@ -556,8 +578,13 @@ game=(function(){
 		for( var spaceShipId in otherPlayers ) updateSpaceShip(otherPlayers[spaceShipId]);
 	
 		/* check to see if the player has crashed into another */
-		if( spaceShipData ) checkForCollision();
-		
+		if( spaceShipData )
+		{
+			checkForCollision();
+			checkForPlayerAsteroidCollision();
+		}
+
+
 		if( spaceShipData )
 		{
 		
@@ -587,7 +614,7 @@ game=(function(){
    
 		ctx.strokeStyle = laserColor;
 		
-drawLasers();
+		drawLasers();
 		
 		ctx.stroke();
   
@@ -720,7 +747,7 @@ drawLasers();
 
 		for( var id in newAsteroids ) createAsteroid( newAsteroids[id] );
 		masterUpdate();
-	}s
+	}
 
 	function onPlayerKilled(ship){
 		/* If you, destroy your ship */
@@ -735,7 +762,6 @@ drawLasers();
 	function killPlayer(){
 		spaceShipData = null;
 		score = 0;
-		throw new Error("something went wrong");
 	}
 	
 	function killEnemy(ship){
