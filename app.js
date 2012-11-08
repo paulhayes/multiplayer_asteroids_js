@@ -24,7 +24,7 @@ function handler (request, response) {
 io.set('log level', 0);
 
 var masterPlayerSocket;
-var playerSockets;
+var playerSockets = [];
 
 // Listen for incoming connections from clients
 io.sockets.on('connection', function (socket) {
@@ -40,7 +40,7 @@ io.sockets.on('connection', function (socket) {
 
 		// This line sends the event (broadcasts it)
 		// to everyone except the originating client.
-		socket.volatile.emit('updatePosition', data);
+		socket.broadcast.emit('updatePosition', data);
 	});
 	
 	socket.on("hit", function(data){

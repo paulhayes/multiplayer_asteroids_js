@@ -84,6 +84,7 @@ game=(function(){
   
 		ctx.moveTo(start.x,start.y);
   
+  
 		ctx.lineTo(end.x,end.y);
 
 		
@@ -152,7 +153,7 @@ game=(function(){
 		var end = { x:laser.lx + laser.x , y:laser.ly + laser.y };
 		drawLine( start, end );
 	}
-	
+
 	function drawSpaceShip(spaceShipData){
 		var x = spaceShipData.x,
 			y = spaceShipData.y;
@@ -199,11 +200,22 @@ game=(function(){
 			radiusSum += asteroids[id].radius;
 		}
 
-		var position = { x : c.width, y : c.height }, 
-			direction = { x : 1 , y : 1 }, 
-			radius = 30;
 
-		spawnNewAsteroid( position, direction, radius )
+		
+		while( radiusSum < 150 ){
+		
+			var randomAngle = Math.random() * 360 * deg2rad;
+			var asteroidSpeed = 5;
+		
+			var position = { x : Math.random() * c.width, y : Math.random() * c.height}, 
+			direction = { x : asteroidSpeed * Math.sin( randomAngle ) , y : asteroidSpeed * Math.cos( randomAngle ) }, 
+			radius = 30;
+			spawnNewAsteroid( position, direction, radius )
+			radiusSum = radiusSum + radius;
+		}
+		
+	
+	
 	}
 
 	function updateAsteroids()
@@ -433,12 +445,12 @@ game=(function(){
 				hit = true;
 				//asteroids.splice(i,1);
 				
-				destroyAsteroid( asteroids[i].id );
+				destroyAsteroid( id );
 
 				var newRadius = asteroid.radius * 0.7;
 				if( newRadius < 5 ) {
-					break;
 				}
+					break;
 
 				var leftAsteroidDirection = rotateBy90( { x : asteroid.vx , y : asteroid.vy  } );
 				var rightAsteroidDirection = rotateByNeg90( { x : asteroid.vx , y : asteroid.vy  } );
@@ -450,7 +462,7 @@ game=(function(){
 				var asteroid2 = spawnNewAsteroid( rightAsteroidPosition, rightAsteroidDirection, newRadius );
 
 				socket.emit('asteroidDestroyed', id, [asteroid1,asteroid2])
-
+				masterUpdate();
 
 
 				break;
@@ -646,6 +658,7 @@ drawLasers();
 
 	function onAppointedMaster(){
 		isPlayerMaster = true;
+		masterUpdate();
 		console.log("appointed master");
 	}
 	
@@ -702,11 +715,12 @@ drawLasers();
 	}
 
 	function onAsteroidDestroyed( id, newAsteroids ){
-
+	
 		destroyAsteroid( id );
 
 		for( var id in newAsteroids ) createAsteroid( newAsteroids[id] );
-	}
+		masterUpdate();
+	}s
 
 	function onPlayerKilled(ship){
 		/* If you, destroy your ship */
@@ -721,6 +735,7 @@ drawLasers();
 	function killPlayer(){
 		spaceShipData = null;
 		score = 0;
+		throw new Error("something went wrong");
 	}
 	
 	function killEnemy(ship){
@@ -768,9 +783,6 @@ drawLasers();
 	setInterval( update, 20 );
 
 	setInterval( updatePlayerPosition, 100 );
-
-	setInterval( masterUpdate, 500 );
-
 	
 	window.requestAnimationFrame( updateScreen );
 	
