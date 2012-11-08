@@ -23,9 +23,13 @@ function handler (request, response) {
 // Delete this row if you want to see debug messages
 io.set('log level', 0);
 
+var masterPlayerSocket;
+var playerSockets;
+
 // Listen for incoming connections from clients
 io.sockets.on('connection', function (socket) {
 	var id; 
+	playerSockets.push( socket );
 
 	socket.on('newPlayer', function(data){
 		id = data.id;
@@ -36,7 +40,7 @@ io.sockets.on('connection', function (socket) {
 
 		// This line sends the event (broadcasts it)
 		// to everyone except the originating client.
-		socket.broadcast.emit('updatePosition', data);
+		socket.volatile.emit('updatePosition', data);
 	});
 	
 	socket.on("hit", function(data){
@@ -49,7 +53,28 @@ io.sockets.on('connection', function (socket) {
 	
 	
 	socket.on('disconnect', function(){
-		io.sockets.emit('playerDisconnected', id);
+
+		playerSockets.splice( playerSockets.indexOf( socket ) , 1 );
+
+		if( masterPlayerSocket === socket ){
+			masterPlayerSocket = playerSockets[0];
+		}
+
+		socket.broadcast.emit('playerDisconnected', id);
 	});
+
+	socket.on('asteroidDestroyed', function(destroyedAsteroidId, newAsteroids){
+		socket.broadcast.emit('asteroidDestroyed', destroyedAsteroidId, newAsteroids );
+	});
+
+	if( ! masterPlayerSocket ){
+		masterPlayerSocket = socket;
+
+		socket.emit('appointedMaster');
+
+		socket.on('asteroidCreated', function( asteroid ){
+			socket.broadcast.emit('asteroidCreated', asteroid );
+		});
+	}
 });
 

@@ -192,15 +192,15 @@ game=(function(){
 	function masterUpdate(){
 		
 		/* if not the master, then don't perform this routine */
-		if( ! isPlayerMaster ) break;
+		if( ! isPlayerMaster ) return;
 
 		var radiusSum = 0;
 		for( var id in asteroids ){
 			radiusSum += asteroids[id].radius;
 		}
 
-		var position = { x : screen, y : }, 
-			direction = { x : , y : }, 
+		var position = { x : c.width, y : c.height }, 
+			direction = { x : 1 , y : 1 }, 
 			radius = 30;
 
 		spawnNewAsteroid( position, direction, radius )
@@ -244,7 +244,7 @@ game=(function(){
 		asteroid.rotation += asteroid.vr;
 		/* if the spaceship is off the screen, move it to the other side */
 		
-		if(asteroid.y < 0) {} 
+		if(asteroid.y < 0) {
 			(asteroid.y) += c.height;
 		}
   
@@ -447,7 +447,7 @@ game=(function(){
 				var rightAsteroidPosition = { x : asteroid.x + asteroidSpeed * rightAsteroidDirection.x , y : asteroid.y + asteroidSpeed * rightAsteroidDirection.y };
 				
 				var asteroid1 = spawnNewAsteroid( leftAsteroidPosition, leftAsteroidDirection, newRadius );
-				var asteroid2 spawnNewAsteroid( rightAsteroidPosition, rightAsteroidDirection, newRadius );
+				var asteroid2 = spawnNewAsteroid( rightAsteroidPosition, rightAsteroidDirection, newRadius );
 
 				socket.emit('asteroidDestroyed', id, [asteroid1,asteroid2])
 
@@ -754,7 +754,7 @@ drawLasers();
 	{
 		var id = ( Math.random() * 0xffffffff ).toString(16);
 		asteroids[id] = { 
-			id : id;
+			id : id,
 			x : position.x, 
 			y : position.y, 
 			radius : radius, 

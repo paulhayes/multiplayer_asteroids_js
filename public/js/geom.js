@@ -44,6 +44,13 @@ geom = new (function(){
 		
 		return horizontal && vertical;
 	}
+
+	this.doesCircleOverlapWithBounds = function(center,radius,bounds){
+		var horizontal = bounds.xMin < ( center.x + radius ) && ( center.x - radius ) < bounds.xMax;
+		var vertical = bounds.yMin < ( center.y + radius ) && ( center.y - radius ) < bounds.yMax;
+
+		return horizontal && vertical;
+	}
 	
 	this.doesPointLieWithinCircle = function(point, centre, radius ){
 		var x = point.x - centre.x ;
@@ -55,6 +62,10 @@ geom = new (function(){
 	}
 
 	this.doesCircleIntersectWithLine = function(lineStart,lineEnd,centre,radius){
+		
+		// work out the interestion of the following two lines
+		// lineStart to lineEnd
+		// centre to centre + perpendicular line of [ lineEnd - lineStart ]
 		//if not then find the intersection point between the line and circle direction as a time along A
 		var u = this.calculateIntersection(lineStart,lineEnd, this.originPoint(), center );
 		
@@ -84,6 +95,7 @@ geom = new (function(){
 		
 		return u;
 	};
+	
 	this.pointOnLine = function(lineStart,lineB,t){
 		var point = {x:0,y:0};
 		return point;
