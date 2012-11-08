@@ -33,7 +33,7 @@ game=(function(){
 	var lastDraw = new Date().getTime() * 0.001;
 	var isPlayerMaster = false;
 	var timeElapsedSinceLastLaser = 0;
-	var asteroidSpeed = 3;
+	var asteroidSpeed = 1;
   var timeBetweenLaserFirings = 0.25;
   var maxRadiusSum = 60;
   var laserRange = 300;
@@ -459,7 +459,7 @@ game=(function(){
 				hit = true;
 				//asteroids.splice(i,1);
 				
-				playerDestroyAsteroid(id);
+				playerDestroyAsteroid(id, { x : laser.vx, y : laser.vy });
 
 				break;
 			}
