@@ -818,7 +818,7 @@ game=(function(){
 	}
 
 	var onReceiveAsteroidlist = function(asteroidss){
-	console.log("onReceiveAsteroidList");
+	
 		asteroids = asteroidss;
 	}
 	
