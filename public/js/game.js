@@ -208,8 +208,9 @@ game=(function(){
 			var position = { x : Math.random() * c.width, y : Math.random() * c.height}, 
 			direction = { x : asteroidSpeed * Math.sin( randomAngle ) , y : asteroidSpeed * Math.cos( randomAngle ) }, 
 			radius = 30;
-			spawnNewAsteroid( position, direction, radius )
-			radiusSum = radiusSum + radius;
+			var asteroid = spawnNewAsteroid( position, direction, radius );
+			socket.emit("asteroidCreated",asteroid);
+			radiusSum = radiusSum + radius; 
 		}
 		
 	
@@ -581,9 +582,12 @@ game=(function(){
 		if( spaceShipData )
 		{
 			checkForCollision();
+			
+		}
+		if( spaceShipData )
+		{
 			checkForPlayerAsteroidCollision();
 		}
-
 
 		if( spaceShipData )
 		{
@@ -794,17 +798,27 @@ game=(function(){
 	function spawnNewAsteroid( position, direction, radius )
 	{
 		var id = ( Math.random() * 0xffffffff ).toString(16);
-		asteroids[id] = { 
-			id : id,
+		return asteroids[id] = { 
+			id : id, 
 			x : position.x, 
 			y : position.y, 
 			radius : radius, 
 			vx : direction.x, 
 			vy : direction.y, 
 			vr : 0 
+		
 		};
 	}
+		//---------------------------------------------------------------------------------------------------------------------------------------------------- 
 		
+	var onGetAsteroidList = function(){
+		console.log("onGetAsteroidList");
+		socket.emit("receiveAsteroidList", asteroids);
+	}
+	var onReceiveAsteroidlist = function(asteroidss){
+	console.log("onReceiveAsteroidList");
+		asteroids = asteroidss;
+	}
 	
 	setInterval( update, 20 );
 
@@ -819,8 +833,10 @@ game=(function(){
 	socket.on("playerKilled", onPlayerKilled );
 	socket.on("asteroidDestroyed", onAsteroidDestroyed);
 	socket.on("asteroidCreated", onAsteroidCreated);
+	socket.on("getAsteroidList", onGetAsteroidList);
+	socket.on("receiveAsteroidList", onReceiveAsteroidlist);
 	socket.on("connect", function(){
 		//console.log("connected");
-		
+	
 	});
 });

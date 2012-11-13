@@ -33,12 +33,15 @@ io.sockets.on('connection', function (socket) {
 
 	socket.on('newPlayer', function(data){
 		id = data.id;
-
+		console.log("newPlayerCalled");
 		if( masterPlayerSocket != socket )
 		{
+			console.log("player is not master");
 			masterPlayerSocket.emit('getAsteroidList');
 			masterPlayerSocket.once('receiveAsteroidList', function(asteroids){
+			console.log("receive asteroid list called");
 				socket.emit('receiveAsteroidList', asteroids);
+
 			});
 		}
 
