@@ -193,7 +193,6 @@ game=(function(){
 
 	function masterUpdate(){
 		
-		console.log("master update "+ isPlayerMaster );
 		/* if not the master, then don't perform this routine */
 		if( ! isPlayerMaster ) return;
 
@@ -202,8 +201,6 @@ game=(function(){
 			radiusSum += asteroids[id].radius;
 		}
 		
-		console.log("radius sum = "+ radiusSum +" "+ maxRadiusSum );
-
 		while( radiusSum < maxRadiusSum ){
 		
 			var randomAngle = Math.random() * 360 * deg2rad;
@@ -817,9 +814,9 @@ game=(function(){
 		//---------------------------------------------------------------------------------------------------------------------------------------------------- 
 		
 	var onGetAsteroidList = function(){
-		console.log("onGetAsteroidList");
 		socket.emit("receiveAsteroidList", asteroids);
 	}
+
 	var onReceiveAsteroidlist = function(asteroidss){
 	console.log("onReceiveAsteroidList");
 		asteroids = asteroidss;
