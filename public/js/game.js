@@ -481,6 +481,8 @@ game=(function(){
 		var newRadius = asteroid.radius * 0.7;
 		
 		if( newRadius < 5 ) {
+			socket.emit('asteroidDestroyed', id, [])
+			masterUpdate();
 			return;
 		}
 
