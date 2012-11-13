@@ -812,11 +812,11 @@ game=(function(){
 		//---------------------------------------------------------------------------------------------------------------------------------------------------- 
 		
 	var onGetAsteroidList = function(){
-		console.log("onGetAsteroidList");
+	
 		socket.emit("receiveAsteroidList", asteroids);
 	}
 	var onReceiveAsteroidlist = function(asteroidss){
-	console.log("onReceiveAsteroidList");
+	
 		asteroids = asteroidss;
 	}
 	
