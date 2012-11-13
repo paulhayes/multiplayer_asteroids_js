@@ -33,6 +33,15 @@ io.sockets.on('connection', function (socket) {
 
 	socket.on('newPlayer', function(data){
 		id = data.id;
+
+		if( masterPlayerSocket != socket )
+		{
+			masterPlayerSocket.emit('getAsteroidList');
+			masterPlayerSocket.once('receiveAsteroidList', function(asteroids){
+				socket.emit('receiveAsteroidList', asteroids);
+			});
+		}
+
 	});
 
 	// Start listening for mouse move events
