@@ -77,7 +77,7 @@ game=(function(){
 	
 	
 	function createSpaceShip(){
-			spaceShipData = { x : Math.random() * c.width, y : Math.random() * c.height, vx : 0, vy : 0, rotation : 0, id : id, vr : 0, ar : 0, ax : 0, ay : 0, keys : {} };
+			spaceShipData = { x : Math.random() * c.width, y : Math.random() * c.height, vx : 0, vy : 0, rotation : 0, id : id, vr : 0, ar : 0, ax : 0, ay : 0, keys : {}, health : 1 };
 			socket.emit('newPlayer', spaceShipData );	
 	}
 	
@@ -159,7 +159,8 @@ game=(function(){
 		var x = spaceShipData.x,
 			y = spaceShipData.y;
 		
-		
+		ctx.strokeStyle = "#fff";
+
 		ctx.save();
 		ctx.translate(x,y);
 		
@@ -175,6 +176,24 @@ game=(function(){
 		
 		ctx.restore();
 
+	}
+
+	function drawScore(){
+		ctx.textAlign = "left";
+		ctx.font = "bold 12px monospace";
+		ctx.fillText("score: "+score, 10, 20 );
+	}
+
+	function drawHealth(){
+		var w = 100;
+		var h = 10;
+		var offset = { x : 3, y : 3 }
+		ctx.fillStyle = "#000";
+		ctx.strokeStyle = "#fff";
+		ctx.rect( c.width - w - offset.x, c.height - h - offset.y, w , h );
+		ctx.fillStyle = "rgb(0,160,0)";
+		ctx.strokeStyle = "#000";
+		ctx.fillRect( c.width - w - offset.x, c.height - h - offset.y, w * spaceShipData.health , h );
 	}
 
 
@@ -429,8 +448,8 @@ game=(function(){
 			var asteroid = asteroids[asteroidId];
 			
 			if( geom.doesCircleOverlapWithBounds( asteroid, asteroid.radius, playerBounds ) ){
-				
-				killPlayer();
+				spaceShipData.health -= ( asteroid.radius / maxRadiusSum );
+				if( spaceShipData.health <= 0 ) killPlayer();
 				playerDestroyAsteroid(asteroidId);
 				
 			}
@@ -635,9 +654,8 @@ game=(function(){
 		
 		if( spaceShipData ) 
 		{
-			ctx.textAlign = "left";
-			ctx.font = "bold 12px monospace";
-			ctx.fillText("score: "+score, 10, 20 );
+			drawScore();
+			drawHealth();
 			drawSpaceShip(spaceShipData);
 		}
 		else {	
