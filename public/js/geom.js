@@ -151,8 +151,8 @@ geom = new (function(){
 			j = 0.8660254;
 
 		a = { 
-			x : v.x * j + v.y * i;
-			y : v.y * j + v.x * i;
+			x : v.x * j + v.y * -i,
+			y : v.y * j + v.x * i
  		};
 
 		return a;
@@ -163,9 +163,9 @@ geom = new (function(){
 			j = 0.8660254;
 
 		a = { 
-			x : v.x * j + v.y * i;
-			y : v.y * j + v.x * i;
- 		};
+			x : v.x * j + v.y * i,
+			y : v.y * j + v.x * -i
+ 		}
 
 		return a;
 	}

@@ -1,4 +1,4 @@
-/* game code */
+                /* game code */
 
 game=(function(){
 // setup
@@ -34,7 +34,7 @@ game=(function(){
 	var isPlayerMaster = false;
 	var timeElapsedSinceLastLaser = 0;
 	var asteroidSpeed = 1;
-  	var timeBetweenLaserFirings = 0.25;
+  	var timeBetweenLaserFirings = 0.25    
   	var maxAsteroidRadius = 30;
   	var maxRadiusSum = 60;
   	var laserRange = 300;
@@ -455,9 +455,12 @@ game=(function(){
 			
 			if( geom.doesCircleOverlapWithBounds( asteroid, asteroid.radius, playerBounds ) ){
 				spaceShipData.health -= ( asteroid.radius / maxAsteroidRadius );
-				if( spaceShipData.health <= 0 ) killPlayer();
-				playerDestroyAsteroid(asteroidId);
-				
+			
+				playerDestroyAsteroid(asteroidId , { x : spaceShipData.vx, y : spaceShipData.vy });
+				if( spaceShipData.health <= 0 )	{
+					killPlayer();
+					break;
+				}
 			}
 		}
 	}
@@ -518,8 +521,8 @@ game=(function(){
 
 
 		direction = geom.normalize( geom.addPoint( destroyDirection, geom.createPoint( asteroid.vx, asteroid.vy ) ), asteroidSpeed );
-		leftAsteroidDirection = geom.rotateBy90( direction );
-		rightAsteroidDirection = geom.rotateByNeg90( direction );
+		leftAsteroidDirection = geom.rotateBy30( direction );
+		rightAsteroidDirection = geom.rotateByNeg30( direction );
 
 		leftAsteroidPosition = { x : asteroid.x + newRadius * leftAsteroidDirection.x , y : asteroid.y + newRadius * leftAsteroidDirection.y };				
 		rightAsteroidPosition = { x : asteroid.x + newRadius * rightAsteroidDirection.x , y : asteroid.y + newRadius * rightAsteroidDirection.y };
