@@ -34,10 +34,11 @@ game=(function(){
 	var isPlayerMaster = false;
 	var timeElapsedSinceLastLaser = 0;
 	var asteroidSpeed = 1;
-  var timeBetweenLaserFirings = 0.25;
-  var maxRadiusSum = 60;
-  var laserRange = 300;
-  var laserSize = 10;
+  	var timeBetweenLaserFirings = 0.25;
+  	var maxAsteroidRadius = 30;
+  	var maxRadiusSum = 60;
+  	var laserRange = 300;
+  	var laserSize = 10;
 	var score = 0;
 	
 	var points = [
@@ -92,9 +93,8 @@ game=(function(){
 	}
 	
 	function drawAsteroids(){
-		for(var i=asteroid.length-1;i>=0;i--) {
-			drawAsteroid(asteroid[i]);
-		}
+
+		for( var asteroidId in asteroids ) drawAsteroid( asteroids[asteroidId] );
 	}
 	
 	function drawAsteroid( asteroid ){
@@ -104,12 +104,14 @@ game=(function(){
 			radius,
 			lastPosition,
 			position = {}, 
-			i = 0;
-			
+			i = 0,
+			alpha = 0,
+			increments =  5.0;
+
 		/* for values of alpha starting at 0 and ending at 360 */
-		for (var alpha= 0; alpha <= 360; alpha += 5){ 
-		
-			radius = defaultRadius + defaultRadius * radiusMap[i % radiusMap.length ] * 1/30;
+
+		while( alpha <= 360 ){ 
+			radius = defaultRadius * ( 1 + radiusMap[i % radiusMap.length ] * 1/30 );
 			
 			/* calculate new position,  x=r*sin(alpha), y=r*cos(alpha); */
  			position.x = x + radius * Math.sin( alpha * deg2rad );
@@ -131,13 +133,13 @@ game=(function(){
 		
 			/* store position onto last the position */	
 		
-		
 			lastPosition.x = position.x;
 			lastPosition.y = position.y;
 	
 			i++;
-		}
-		
+			alpha += increments;
+
+		} 
 		
 	}
 	
@@ -159,8 +161,6 @@ game=(function(){
 		var x = spaceShipData.x,
 			y = spaceShipData.y;
 		
-		ctx.strokeStyle = "#fff";
-
 		ctx.save();
 		ctx.translate(x,y);
 		
@@ -185,15 +185,21 @@ game=(function(){
 	}
 
 	function drawHealth(){
-		var w = 100;
-		var h = 10;
-		var offset = { x : 3, y : 3 }
-		ctx.fillStyle = "#000";
+		var w = 100,
+			h = 10,
+			ox = 3, 
+			oy = 3 ;
+
+		ctx.beginPath();
+		ctx.fillStyle = "#0d0";
+		ctx.fillRect( c.width - w - ox, c.height - h - oy, w * spaceShipData.health , h );
+		ctx.strokeRect( c.width - w - ox, c.height - h - oy, w , h );
 		ctx.strokeStyle = "#fff";
-		ctx.rect( c.width - w - offset.x, c.height - h - offset.y, w , h );
-		ctx.fillStyle = "rgb(0,160,0)";
-		ctx.strokeStyle = "#000";
-		ctx.fillRect( c.width - w - offset.x, c.height - h - offset.y, w * spaceShipData.health , h );
+		ctx.lineWidth = 2;
+		ctx.stroke();
+		ctx.lineWidth = 1;
+
+		ctx.closePath();
 	}
 
 
@@ -226,7 +232,7 @@ game=(function(){
 		
 			var position = { x : Math.random() * c.width, y : Math.random() * c.height}, 
 			direction = { x : asteroidSpeed * Math.sin( randomAngle ) , y : asteroidSpeed * Math.cos( randomAngle ) }, 
-			radius = 30;
+			radius = maxAsteroidRadius;
 			var asteroid = spawnNewAsteroid( position, direction, radius );
 			socket.emit("asteroidCreated",asteroid);
 			radiusSum = radiusSum + radius; 
@@ -448,7 +454,7 @@ game=(function(){
 			var asteroid = asteroids[asteroidId];
 			
 			if( geom.doesCircleOverlapWithBounds( asteroid, asteroid.radius, playerBounds ) ){
-				spaceShipData.health -= ( asteroid.radius / maxRadiusSum );
+				spaceShipData.health -= ( asteroid.radius / maxAsteroidRadius );
 				if( spaceShipData.health <= 0 ) killPlayer();
 				playerDestroyAsteroid(asteroidId);
 				
@@ -490,11 +496,12 @@ game=(function(){
 
 	function playerDestroyAsteroid(id, destroyDirection){
 
-		var asteroid = asteroids[id];
+		var asteroid = asteroids[id],
+			newRadius;
 
 		destroyAsteroid( id );
 
-		var newRadius = asteroid.radius * 0.7;
+		newRadius = asteroid.radius * 0.78;
 		
 		if( newRadius < 5 ) {
 			socket.emit('asteroidDestroyed', id, [])
@@ -502,14 +509,23 @@ game=(function(){
 			return;
 		}
 
-		var leftAsteroidDirection = rotateBy90( { x : asteroid.vx , y : asteroid.vy  } );
-		var rightAsteroidDirection = rotateByNeg90( { x : asteroid.vx , y : asteroid.vy  } );
+		var leftAsteroidDirection,
+			rightAsteroidDirection,
+			leftAsteroidPosition,
+			rightAsteroidPosition,
+			asteroid1,
+			asteroid2;
 
-		var leftAsteroidPosition = { x : asteroid.x + asteroidSpeed * leftAsteroidDirection.x , y : asteroid.y + asteroidSpeed * leftAsteroidDirection.y };				
-		var rightAsteroidPosition = { x : asteroid.x + asteroidSpeed * rightAsteroidDirection.x , y : asteroid.y + asteroidSpeed * rightAsteroidDirection.y };
+
+		direction = geom.normalize( geom.addPoint( destroyDirection, geom.createPoint( asteroid.vx, asteroid.vy ) ), asteroidSpeed );
+		leftAsteroidDirection = geom.rotateBy90( direction );
+		rightAsteroidDirection = geom.rotateByNeg90( direction );
+
+		leftAsteroidPosition = { x : asteroid.x + newRadius * leftAsteroidDirection.x , y : asteroid.y + newRadius * leftAsteroidDirection.y };				
+		rightAsteroidPosition = { x : asteroid.x + newRadius * rightAsteroidDirection.x , y : asteroid.y + newRadius * rightAsteroidDirection.y };
 		
-		var asteroid1 = spawnNewAsteroid( leftAsteroidPosition, leftAsteroidDirection, newRadius );
-		var asteroid2 = spawnNewAsteroid( rightAsteroidPosition, rightAsteroidDirection, newRadius );
+		asteroid1 = spawnNewAsteroid( leftAsteroidPosition, leftAsteroidDirection, newRadius );
+		asteroid2 = spawnNewAsteroid( rightAsteroidPosition, rightAsteroidDirection, newRadius );
 
 		socket.emit('asteroidDestroyed', id, [asteroid1,asteroid2])
 		masterUpdate();
@@ -597,7 +613,7 @@ game=(function(){
 		if( spaceShipData ) updateSpaceShip( spaceShipData );	
 		
 		/* update all the other spaceships */
-		for( var spaceShipId in otherPlayers ) updateSpaceShip(otherPlayers[spaceShipId]);
+		for( var spaceShipId in otherPlayers ) if( id != otherPlayers.id ) updateSpaceShip(otherPlayers[spaceShipId]);
 	
 		/* check to see if the player has crashed into another */
 		if( spaceShipData )
@@ -632,9 +648,7 @@ game=(function(){
 		var currentTime = new Date().getTime() * 0.001;
 		deltaTime = currentTime - lastDraw;
 
-	  
-		clearScreen();
-		ctx.lineWidth = 1;
+	  	clearScreen();
 		ctx.beginPath();
    
 		ctx.strokeStyle = laserColor;
@@ -642,34 +656,47 @@ game=(function(){
 		drawLasers();
 		
 		ctx.stroke();
-  
 		ctx.closePath();
-
-		
 		ctx.beginPath();
-   
+
 		ctx.strokeStyle = shipColor;
 		ctx.fillStyle = shipColor;
-		for( var spaceShipId in otherPlayers ) drawSpaceShip(otherPlayers[spaceShipId]);
+		for( var spaceShipId in otherPlayers ) drawSpaceShip(otherPlayers[spaceShipId],shipColor);
 		
+
+		ctx.stroke();
+		ctx.closePath();
+
 		if( spaceShipData ) 
 		{
 			drawScore();
 			drawHealth();
+			ctx.beginPath();
 			drawSpaceShip(spaceShipData);
+			ctx.lineWidth = 2;
+			ctx.strokeStyle = "#fe8";
+			ctx.stroke();
+			ctx.lineWidth = 1;
+			ctx.closePath();
 		}
 		else {	
 			
+			ctx.beginPath();
 			ctx.textAlign = "center";
 			ctx.font = "bold 12px monospace";
 			ctx.fillText("PRESS SPACE TO START", c.width/2, c.height/2);
+			ctx.stroke();
+			ctx.closePath();
 		}
-		
-		for( var asteroidId in asteroids ) drawAsteroid( asteroids[asteroidId] );
+
+
+		ctx.beginPath();
+		ctx.strokeStyle = "#FFF";
+
+		drawAsteroids();
 	
 		
 		ctx.stroke();
-  
 		ctx.closePath();
 
 		
@@ -680,7 +707,7 @@ game=(function(){
 	
 	function onUpdatePlayerPosition(data){
 		
-		var keyAlreadyExists =  data.id in otherPlayers ;
+		var keyAlreadyExists = data.id in otherPlayers ;
 		
 		if( ! keyAlreadyExists ) otherPlayers[data.id] = { x : data.x, y : data.y };
 		
@@ -795,26 +822,7 @@ game=(function(){
 	function onNewLaser(laser){
 		lasers.push(laser);
 	}
-	
-	function rotateBy90(v){
-		var tmp;
-		v = { x:v.x, y:v.y };
-		tmp = v.y;
-		v.y = v.x; 
-		v.x = tmp;
-		v.y = -v.y;
-		return v;
-	}
-	function rotateByNeg90(v){
-		var tmp;
-		v = { x:v.x, y:v.y };
-		tmp = v.y;
-		v.y = v.x; 
-		v.x = tmp;
-		v.x = -v.x;
-		return v;
-	}
-	
+		
 	function spawnNewAsteroid( position, direction, radius )
 	{
 		var id = ( Math.random() * 0xffffffff ).toString(16);

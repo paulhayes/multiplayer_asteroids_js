@@ -95,6 +95,12 @@ geom = new (function(){
 		
 		return u;
 	};
+
+	this.normalize = function(point, length){
+		if( arguments.length < 2 ) length = 1;
+		var inverseDistance = 1 / Math.sqrt( point.x * point.x + point.y * point.y );
+		return { x : length * point.x * inverseDistance, y : length * point.y * inverseDistance };
+	}
 	
 	this.pointOnLine = function(lineStart,lineB,t){
 		var point = {x:0,y:0};
@@ -107,11 +113,37 @@ geom = new (function(){
 		return x*x+y*y;
 	}
 	
-	this.originPoint = function(){
-		return { x : 0, y : 0 };
+	this.createPoint = function( x, y ){
+		x = ( arguments >= 1 ) ? x : 0 ;
+		y = ( arguments >= 2 ) ? y : 0 ;
+ 		return { x : x, y : y };
 	}
 	
 	this.subtractPoint = function( p1, p2 ){
 		return { x : p1.x - p2.x, y : p1.y - p2.y  };
 	}
+
+	this.addPoint = function( p1, p2 ){
+		return { x : p1.x + p2.x, y : p1.y - p2.y };
+	}
+
+	this.rotateBy90 = function(v){
+		var tmp;
+		v = { x:v.x, y:v.y };
+		tmp = v.y;
+		v.y = v.x; 
+		v.x = tmp;
+		v.y = -v.y;
+		return v;
+	}
+	this.rotateByNeg90 = function(v){
+		var tmp;
+		v = { x:v.x, y:v.y };
+		tmp = v.y;
+		v.y = v.x; 
+		v.x = tmp;
+		v.x = -v.x;
+		return v;
+	}
+
 })();
