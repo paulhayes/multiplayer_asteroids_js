@@ -146,4 +146,28 @@ geom = new (function(){
 		return v;
 	}
 
+	this.rotateBy30 = function(v){
+		var i = 0.5,
+			j = 0.8660254;
+
+		a = { 
+			x : v.x * j + v.y * i;
+			y : v.y * j + v.x * i;
+ 		};
+
+		return a;
+	}
+
+	this.rotateByNeg30 = function(v){
+		var i = -0.5,
+			j = 0.8660254;
+
+		a = { 
+			x : v.x * j + v.y * i;
+			y : v.y * j + v.x * i;
+ 		};
+
+		return a;
+	}
+
 })();
