@@ -33,7 +33,6 @@ io.sockets.on('connection', function (socket) {
 
 	socket.on('newPlayer', function(data){
 		id = data.id;
-		console.log("newPlayerCalled");
 		if( masterPlayerSocket != socket )
 		{
 		

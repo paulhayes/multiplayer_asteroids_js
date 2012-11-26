@@ -153,6 +153,7 @@ geom = new (function(){
 		a = { 
 			x : v.x * j + v.y * -i,
 			y : v.y * j + v.x * i
+
  		};
 
 		return a;
@@ -163,11 +164,23 @@ geom = new (function(){
 			j = 0.8660254;
 
 		a = { 
+
 			x : v.x * j + v.y * i,
 			y : v.y * j + v.x * -i
  		}
 
+
 		return a;
 	}
 
+	this.rotateBy = function( angle, vector ){
+		var angle += Math.atan2( vector.y, vector.x );
+		
+		a = { 
+			x : Math.cos( angle );
+			y : Math.sin( angle );
+ 		};
+
+ 		return a;
+	}
 })();
