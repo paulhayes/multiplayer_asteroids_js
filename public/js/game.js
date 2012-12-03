@@ -459,7 +459,7 @@ game=(function(){
 				playerDestroyAsteroid(asteroidId , { x : spaceShipData.vx, y : spaceShipData.vy });
 				if( spaceShipData.health <= 0 )	{
 					killPlayer();
-					socket.emit("shipDestroyed", spaceShipId );
+					socket.emit("shipDestroyed", id );
 
 					break;
 				}
@@ -830,7 +830,7 @@ game=(function(){
 		
 	function spawnNewAsteroid( position, direction, radius )
 	{
-		var id = ( Math.random() * 0xffffffff ).toString(16);
+		var id = Math.floor( Math.random() * 0xffffffff ).toString(16);
 		return asteroids[id] = { 
 			id : id, 
 			x : position.x, 
