@@ -1,6 +1,8 @@
 
 geom = new (function(){
 
+	var rad2deg = 180/Math.PI;
+	var deg2rad = Math.PI/180;
 	this.applyMatrixToPoints = function(points,transform){
 		
 		return points.map(function(v){ 
@@ -174,11 +176,12 @@ geom = new (function(){
 	}
 
 	this.rotateBy = function( angle, vector ){
-		var angle += Math.atan2( vector.y, vector.x );
+		 angle *= deg2rad;
+		 angle += Math.atan2( vector.y, vector.x );
 		
 		a = { 
-			x : Math.cos( angle );
-			y : Math.sin( angle );
+			x : Math.cos( angle ),
+			y : Math.sin( angle  )
  		};
 
  		return a;

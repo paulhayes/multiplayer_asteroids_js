@@ -521,8 +521,8 @@ game=(function(){
 
 
 		direction = geom.normalize( geom.addPoint( destroyDirection, geom.createPoint( asteroid.vx, asteroid.vy ) ), asteroidSpeed );
-		leftAsteroidDirection = geom.rotateBy30( direction );
-		rightAsteroidDirection = geom.rotateByNeg30( direction );
+		leftAsteroidDirection = geom.rotateBy(30, direction );
+		rightAsteroidDirection = geom.rotateBy(-30, direction );
 
 		leftAsteroidPosition = { x : asteroid.x + newRadius * leftAsteroidDirection.x , y : asteroid.y + newRadius * leftAsteroidDirection.y };				
 		rightAsteroidPosition = { x : asteroid.x + newRadius * rightAsteroidDirection.x , y : asteroid.y + newRadius * rightAsteroidDirection.y };
