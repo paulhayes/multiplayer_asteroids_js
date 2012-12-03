@@ -69,6 +69,7 @@ io.sockets.on('connection', function (socket) {
 
 		if( masterPlayerSocket === socket ){
 			masterPlayerSocket = playerSockets[0];
+			masterPlayerSocket.emit('appointedMaster');
 		}
 
 		socket.broadcast.emit('playerDisconnected', id);
