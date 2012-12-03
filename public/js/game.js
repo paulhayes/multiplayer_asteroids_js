@@ -438,7 +438,7 @@ game=(function(){
 			
 			if( geom.doBoundsOverlap( enemyBounds, playerBounds ) ){
 				killPlayer();
-				socket.emit("hit", enemySpaceShip );
+				socket.emit("shipDestroyed", enemySpaceShip );
 				delete otherPlayers[enemySpaceShip.id];
 			}
 		}
@@ -459,6 +459,8 @@ game=(function(){
 				playerDestroyAsteroid(asteroidId , { x : spaceShipData.vx, y : spaceShipData.vy });
 				if( spaceShipData.health <= 0 )	{
 					killPlayer();
+					socket.emit("shipDestroyed", spaceShipId );
+
 					break;
 				}
 			}
@@ -573,7 +575,7 @@ game=(function(){
 	}
 	
 	function hitSpaceShip(enemySpaceShip){
-		socket.emit("hit", enemySpaceShip );
+		socket.emit("shipDestroyed", enemySpaceShip );
 		score += 10;
 		delete otherPlayers[enemySpaceShip.id];
 	}

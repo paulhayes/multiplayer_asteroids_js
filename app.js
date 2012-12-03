@@ -54,7 +54,7 @@ io.sockets.on('connection', function (socket) {
 		socket.broadcast.emit('updatePosition', data);
 	});
 	
-	socket.on("hit", function(data){
+	socket.on("shipDestroyed", function(data){
 		socket.broadcast.emit('playerKilled', data);
 	});
 	
