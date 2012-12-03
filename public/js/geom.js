@@ -177,11 +177,10 @@ geom = new (function(){
 
 	this.rotateBy = function( angle, vector ){
 		 angle *= deg2rad;
-		 angle += Math.atan2( vector.y, vector.x );
-		
+		 
 		a = { 
-			x : Math.cos( angle ),
-			y : Math.sin( angle  )
+			x : vector.x * Math.cos( angle ) - vector.y * Math.sin( angle ) ,
+			y : vector.x * Math.sin( angle  ) + vector.y * Math.cos( angle )
  		};
 
  		return a;
