@@ -344,33 +344,33 @@ game=(function(){
   
 		
 		if( spaceShipData.keys[UP_KEY] ){
-			spaceShipData.ax = 0.1 * Math.sin( deg2rad * spaceShipData.rotation );
-			spaceShipData.ay = -0.1 * Math.cos( deg2rad * spaceShipData.rotation );
+			spaceShipData.ax = 0.3 * Math.sin( deg2rad * spaceShipData.rotation );
+			spaceShipData.ay = -0.3 * Math.cos( deg2rad * spaceShipData.rotation );
 		}else
 		{
 			spaceShipData.ax = spaceShipData.ay = 0;
 		}
 		
-		spaceShipData.ar =  0;
+		//spaceShipData.vr =  0;
 
 		/* if the user has pressed left, decrease the space ship rotation angle */
  
 		if( spaceShipData.keys[LEFT_KEY] )
 		{
-			spaceShipData.ar = -0.25;
+			spaceShipData.vr = -0.25 * 24;
 		}
 		/* if the user has pressed right, increase the space ship rotation angle */
   
 
 		else if( spaceShipData.keys[RIGHT_KEY] ){
 		
-			spaceShipData.ar = 0.25;
+			spaceShipData.vr = 0.25 * 24;
 		}
 				
 		
 		spaceShipData.vx += spaceShipData.ax;
 		spaceShipData.vy += spaceShipData.ay;
-		spaceShipData.vr += spaceShipData.ar;
+		//spaceShipData.vr += spaceShipData.ar;
 	
 		/* move the spaceship positon by the velocity */
   
@@ -401,9 +401,9 @@ game=(function(){
 		}
 
 		
-		spaceShipData.vr *= 0.95;
-		spaceShipData.vx *= 0.99;
-		spaceShipData.vy *= 0.99;
+		spaceShipData.vr *= 0.7;
+		spaceShipData.vx *= 0.97;
+		spaceShipData.vy *= 0.97;
 		
 		var transform = spaceShipData.transform || ( spaceShipData.transform = new Transform() );
 		transform.reset();	
@@ -508,7 +508,7 @@ game=(function(){
 
 		newRadius = asteroid.radius * 0.78;
 		
-		if( newRadius < 5 ) {
+		if( newRadius < 6 ) {
 			socket.emit('asteroidDestroyed', id, [])
 			masterUpdate();
 			return;
@@ -523,12 +523,19 @@ game=(function(){
 
 
 		direction = geom.normalize( geom.addPoint( destroyDirection, geom.createPoint( asteroid.vx, asteroid.vy ) ), asteroidSpeed );
-		leftAsteroidDirection = geom.rotateBy(30, direction );
-		rightAsteroidDirection = geom.rotateBy(-30, direction );
+		leftAsteroidDirection = geom.rotateBy(60, direction );
+		rightAsteroidDirection = geom.rotateBy(-60, direction );
 
 		leftAsteroidPosition = { x : asteroid.x + newRadius * leftAsteroidDirection.x , y : asteroid.y + newRadius * leftAsteroidDirection.y };				
 		rightAsteroidPosition = { x : asteroid.x + newRadius * rightAsteroidDirection.x , y : asteroid.y + newRadius * rightAsteroidDirection.y };
 		
+		var noise = 0.3;
+
+		leftAsteroidPosition.vx *= 1 + ( noise * ( Math.random() - 0.5 ) );
+		leftAsteroidPosition.vy *= 1 + ( noise * ( Math.random() - 0.5 ) );
+		rightAsteroidPosition.vx *= 1 + ( noise * ( Math.random() - 0.5 ) );
+		rightAsteroidPosition.vy *= 1 + ( noise * ( Math.random() - 0.5 ) );
+
 		asteroid1 = spawnNewAsteroid( leftAsteroidPosition, leftAsteroidDirection, newRadius );
 		asteroid2 = spawnNewAsteroid( rightAsteroidPosition, rightAsteroidDirection, newRadius );
 
@@ -678,7 +685,7 @@ game=(function(){
 			drawHealth();
 			ctx.beginPath();
 			drawSpaceShip(spaceShipData);
-			ctx.lineWidth = 2;
+			ctx.lineWidth = 1;
 			ctx.strokeStyle = "#fe8";
 			ctx.stroke();
 			ctx.lineWidth = 1;
